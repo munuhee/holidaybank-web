@@ -15,7 +15,7 @@ npm run dev        # http://localhost:3000, API expected on :8000
 | Variable | Purpose |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | The API as browsers reach it |
-| `API_INTERNAL_URL` | Optional: the API as the Next.js server reaches it (Docker: `http://api:8000`) |
+| `API_INTERNAL_URL` | Optional: the API as the Next.js server reaches it (Docker: `http://api:8000`). Also proxied at `/backend/*` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL, for metadata and the sitemap |
 | `REVALIDATE_SECRET` | Must equal the API's; lets admin saves refresh public pages |
 | `NEXT_PUBLIC_TAWK_SRC` | Optional Tawk.to embed URL, which enables live chat |
@@ -44,3 +44,15 @@ CI (`.github/workflows/ci.yml`) runs the same. The build passes without a runnin
   - `logo.svg` for dark grounds, `logo-on-light.svg` for light ones.
   - `logo-compact(-on-light).svg` omits the tagline, for the header.
   - `logo-mark.svg` is the plane, swoosh and giraffes only; it is also the favicon.
+
+## Site and API on unrelated domains
+
+When the site and API share no parent domain (for example `holidaybank.netlify.app` and
+`holidaybank-api-production.up.railway.app`), the admin cookie set by the API is invisible to the
+site. Route the browser through the built-in proxy instead:
+
+```
+NEXT_PUBLIC_API_URL=https://holidaybank.netlify.app/backend
+API_INTERNAL_URL=https://holidaybank-api-production.up.railway.app
+```
+
