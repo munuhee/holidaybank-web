@@ -1,0 +1,112 @@
+import type { Metadata } from 'next';
+import { PageBanner } from '@/components/ui/PageBanner';
+import { DestinationCard } from '@/components/destinations/DestinationCard';
+import { DestinationFilters } from '@/components/destinations/DestinationFilters';
+import { IconicExperiences } from '@/components/destinations/IconicExperiences';
+import { SectionHeading } from '@/components/ui/SectionHeading';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ButtonLink } from '@/components/ui/Button';
+import { Reveal } from '@/components/ui/Reveal';
+import { apiListSafe } from '@/lib/api';
+import { getSettings } from '@/lib/settings';
+import { TAGS } from '@/lib/tags';
+import type { Destination } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Destinations',
+  description:
+    'Kenya, Tanzania, Uganda and Rwanda for safaris and getaways; France, Greece, Italy, Switzerland and Spain for European holidays.',
+};
+
+export default async function DestinationsPage() {
+  const [{ items }, settings] = await Promise.all([
+    apiListSafe<Destination>('/api/destinations?limit=50', { tags: [TAGS.destinations] }),
+    getSettings(),
+  ]);
+  const banner = settings.pages.destinations;
+  const regions = Array.from(new Map(items.map((d) => [d.region, d.regionLabel])).entries());
+
+  return (
+    <>
+      <PageBanner
+        title={banner.title}
+        subtitle={banner.subtitle}
+        image={banner.image}
+        crumbs={[
+          { href: '/', label: 'Home' },
+          { href: '/destinations', label: 'Destinations' },
+        ]}
+      />
+
+      {items.length === 0 ? (
+        <section className="bg-cream-100 py-16">
+          <div className="container-page">
+            <EmptyState
+              title="Destinations coming soon"
+              message="Our destination guides are being prepared. In the meantime, tell us where you would like to go."
+              action={<ButtonLink href="/contact">Get in touch</ButtonLink>}
+            />
+          </div>
+        </section>
+      ) : (
+        regions.map(([region, label], r) => (
+          <section key={region} className={`py-14 md:py-20 ${r % 2 ? 'bg-charcoal-900' : 'bg-cream-100'}`}>
+            <div className="container-page">
+              <SectionHeading
+                eyebrow={label}
+                title={region === 'europe' ? 'Holidays in Europe' : 'Safaris and getaways in East Africa'}
+                tone={r % 2 ? 'light' : 'dark'}
+                description={
+                  region === 'europe'
+                    ? 'City breaks and rail journeys, with visas and flights sorted.'
+                    : 'Where our Kenyan packages and safaris go, from the coast to the gorilla forests.'
+                }
+              />
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {items
+                  .filter((d) => d.region === region)
+                  .map((destination, i) => (
+                    <Reveal key={destination._id} delay={(i % 3) * 80}>
+                      <DestinationCard destination={destination} />
+                    </Reveal>
+                  ))}
+              </div>
+            </div>
+          </section>
+        ))
+      )}
+
+      <IconicExperiences destinations={items} />
+
+      {/* Searchable, filterable grid of everywhere we go. */}
+      {items.length > 0 ? (
+        <section className="bg-cream-50 py-12 sm:py-16 md:py-24">
+          <div className="container-page">
+            <SectionHeading
+              eyebrow="Search"
+              title="Find a place"
+              description="Filter by region, or search for a park, city or country."
+              align="left"
+            />
+            <DestinationFilters destinations={items} />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="bg-charcoal-950 py-12 sm:py-16 md:py-20">
+        <div className="container-page text-center">
+          <h2 className="mx-auto max-w-2xl text-3xl text-white">Not sure where to start?</h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-cream-200/75">
+            Tell us your dates, your budget and what you most want to see. We will tell you honestly
+            where and when to go.
+          </p>
+          <div className="mt-8">
+            <ButtonLink href="/contact" size="lg">
+              Start your journey
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

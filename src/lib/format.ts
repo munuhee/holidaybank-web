@@ -1,0 +1,53 @@
+/**
+ * Kenyan packages are priced in shillings and everything else in US dollars,
+ * matching the original site: "KSh 24,500" and "$1,650". USD is formatted
+ * en-US so it reads "$1,650" rather than "US$1,650".
+ */
+export function formatPrice(amount: number, currency = 'KES'): string {
+  if (currency === 'KES') {
+    // Written as the original site did, "KSh 24,500"; Intl's en-KE gives "Ksh".
+    return `KSh ${new Intl.NumberFormat('en-KE', { maximumFractionDigits: 0 }).format(amount)}`;
+  }
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
+}
+
+export function formatDate(value: string | Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(value));
+}
+
+export function formatDuration(days: number, nights?: number): string {
+  if (days === 1) return 'Day trip';
+  const n = nights ?? Math.max(0, days - 1);
+  return `${days} days / ${n} nights`;
+}
+
+/** "+254 700 000 000" -> "+254700000000", for tel: links. */
+export function telHref(phone: string): string {
+  return phone.replace(/[^\d+]/g, '');
+}
+
+export function whatsappHref(phone: string): string {
+  return `https://wa.me/${phone.replace(/[^\d]/g, '')}`;
+}
+
+/**
+ * The second contact number, or undefined when there is nothing extra to show.
+ *
+ * Compared on digits alone: the same number stored as "+254700000000" in one
+ * field and "+254 700 000 000" in the other is one number, and listing it
+ * twice looks like a mistake to a visitor.
+ */
+export function secondaryNumber(phone: string, whatsapp?: string): string | undefined {
+  if (!whatsapp) return undefined;
+  const digits = (v: string) => v.replace(/\D/g, '');
+  return digits(whatsapp) === digits(phone) ? undefined : whatsapp;
+}
+
+/** "Kenya · Tanzania" style place line for a tour card. */
+export function tourPlace(tour: { locationLabel?: string | null; countries: string[] }): string {
+  return tour.locationLabel || tour.countries.join(' · ') || 'East Africa';
+}
